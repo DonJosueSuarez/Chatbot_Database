@@ -1,0 +1,148 @@
+/* Chat window styles */
+
+html, body{
+    height: 95%;
+}
+
+.Contenedor {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    gap: 32px;
+    max-width: 95%;
+    margin: 40px auto;
+    height: 95%;
+}
+
+.Presentacion {
+    flex: 1 1 0;
+    min-width: 0;
+    max-width: 320px;
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+    padding: 32px 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 0;
+}
+
+.Presentacion img {
+    width: 120px;
+    margin-bottom: 16px;
+}
+
+.ChatContainer {
+    flex: 3 1 0;
+    min-height: 400px;
+    height: 95%;
+    min-width: 0;
+    background: #f5f5f5;
+    border-radius: 16px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+    padding: 32px 24px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+@media (max-width: 900px) {
+    .Contenedor {
+        flex-direction: column;
+        gap: 16px;
+        max-width: 98vw;
+    }
+    .Presentacion, .ChatContainer {
+        max-width: 100%;
+        min-width: 0;
+        padding: 20px 10px;
+    }
+}
+
+.chat-window {
+    background: #f5f5f5;
+    border-radius: 10px;
+    padding: 16px;
+    height: 100%;
+    overflow-y: auto;
+    margin-bottom: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.msg {
+    max-width: 70%;
+    padding: 10px 16px;
+    border-radius: 16px;
+    margin-bottom: 4px;
+    word-break: break-word;
+    font-size: 1rem;
+    display: inline-block;
+}
+
+.msg.user {
+    background: #d1e1e7;
+    align-self: flex-end;
+    text-align: right;
+}
+
+.msg.bot {
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    align-self: flex-start;
+    text-align: left;
+}
+
+.msg-content {
+    display: inline-block;
+}
+
+.chat-form {
+    display: flex;
+    gap: 8px;
+}
+
+.chat-form input[type="text"] {
+    flex: 1;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    font-size: 1rem;
+}
+
+.chat-form button {
+    padding: 10px 18px;
+    border-radius: 8px;
+    border: none;
+    background: #007bff;
+    color: #fff;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.chat-form button:hover {
+    background: #0056b3;
+}
+
+.typing {
+    color: #888;
+    font-style: italic;
+}
+
+.error {
+    color: #c00;
+    font-weight: bold;
+}
+
+.chat-plot {
+    display: block;
+    max-width: 100%;
+    max-height: 100%;
+    margin-top: 10px;
+    border-radius: 8px;
+    /* box-shadow: 0 2px 8px rgba(0,0,0,0.08); */
+}

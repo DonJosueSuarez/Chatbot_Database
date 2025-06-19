@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='utf-8'>
+    <meta http-equiv='X-UA-Compatible' content='IE=edge'>
+    <title>Chatbot Triple A</title>
+    <meta name='viewport' content='width=device-width, initial-scale=1'>
+    <link rel='stylesheet' type='text/css' media='screen' href='style.css'>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script></head>
+<body>
+    <div class="Contenedor">
+        <article class="Presentacion">
+            <h1>Chatbot Triple A</h1>
+            <img src="https://png.pngtree.com/png-vector/20240824/ourmid/pngtree-ai-chatbot-png-image_13604462.png" alt="">
+            <p>Bienvenido a Chatbot Triple A, te ayudaré respondiendo preguntas sobre tu negocio 🤖</p>
+        </article>
+        <article class="ChatContainer">
+            <div id="chat-window" class="chat-window">
+                <!-- Mensajes del chat aparecerán aquí -->
+            </div>
+            <form id="chat-form" class="chat-form">
+                <input type="text" id="user-input" placeholder="Escribe tu pregunta..." autocomplete="off" required />
+                <button type="submit">Enviar</button>
+            </form>
+        </article>
+    </div>
+    <script>
+    const chatWindow = document.getElementById('chat-window');
+    const chatForm = document.getElementById('chat-form');
+    const userInput = document.getElementById('user-input');
+
+    function addMessage(sender, text, imageBase64 = null) {
+        const msgDiv = document.createElement('div');
+        msgDiv.className = sender === 'user' ? 'msg user' : 'msg bot';
+        let html;
+        if (sender === 'bot') {
+            html = `<span class="msg-content">${marked.parse(text)}</span>`;
+        } else {
+            html = `<span class="msg-content">${text}</span>`;
+        }
+        if (imageBase64) {
+            html += `<br><img class="chat-plot" src="data:image/png;base64,${imageBase64}" alt="Gráfico generado" />`;
+        }
+        msgDiv.innerHTML = html;
+        chatWindow.appendChild(msgDiv);
+        chatWindow.scrollTop = chatWindow.scrollHeight;
+    }
+
+    chatForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const question = userInput.value.trim();
+        if (!question) return;
+        addMessage('user', question);
+        userInput.value = '';
+        addMessage('bot', '<span class="typing">Escribiendo...</span>');
+        try {
+            const res = await fetch('http://186.3.251.109:9015/human_query', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ human_query: question })
+            });
+            const data = await res.json();
+            // Elimina el mensaje de "Escribiendo..."
+            chatWindow.removeChild(chatWindow.lastChild);
+            if (data.answer) {
+                addMessage('bot', data.answer, data.image_base64);
+            } else if (data.error) {
+                addMessage('bot', `<span class="error">${data.error}</span>`);
+            } else {
+                addMessage('bot', '<span class="error">Error inesperado</span>');
+            }
+        } catch (err) {
+            chatWindow.removeChild(chatWindow.lastChild);
+            addMessage('bot', '<span class="error">Error de conexión</span>');
+        }
+    });
+    </script>
+</body>
+</html>
