@@ -20,6 +20,9 @@
             </div>
             <form id="chat-form" class="chat-form">
                 <input type="text" id="user-input" placeholder="Escribe tu pregunta..." autocomplete="off" required />
+                <label style="display:flex;align-items:center;gap:4px;font-size:0.95em;">
+                  <input type="checkbox" id="plot-checkbox" style="margin:0;"> Gráfico
+                </label>
                 <button type="submit">Enviar</button>
             </form>
         </article>
@@ -28,18 +31,21 @@
     const chatWindow = document.getElementById('chat-window');
     const chatForm = document.getElementById('chat-form');
     const userInput = document.getElementById('user-input');
+    const plotCheckbox = document.getElementById('plot-checkbox');
 
     function addMessage(sender, text, imageBase64 = null) {
         const msgDiv = document.createElement('div');
         msgDiv.className = sender === 'user' ? 'msg user' : 'msg bot';
         let html;
         if (sender === 'bot') {
-            html = `<span class="msg-content">${marked.parse(text)}</span>`;
+            // Mostrar primero el gráfico y luego el texto
+            html = '';
+            if (imageBase64) {
+                html += `<img class="chat-plot" src="data:image/png;base64,${imageBase64}" alt="Gráfico generado" /><br>`;
+            }
+            html += `<span class="msg-content">${marked.parse(text)}</span>`;
         } else {
             html = `<span class="msg-content">${text}</span>`;
-        }
-        if (imageBase64) {
-            html += `<br><img class="chat-plot" src="data:image/png;base64,${imageBase64}" alt="Gráfico generado" />`;
         }
         msgDiv.innerHTML = html;
         chatWindow.appendChild(msgDiv);
@@ -54,10 +60,10 @@
         userInput.value = '';
         addMessage('bot', '<span class="typing">Escribiendo...</span>');
         try {
-            const res = await fetch('http://186.3.251.109:9015/human_query', {
+            const res = await fetch('http://127.0.0.1:8000/human_query', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ human_query: question })
+                body: JSON.stringify({ human_query: question, plot: plotCheckbox.checked })
             });
             const data = await res.json();
             // Elimina el mensaje de "Escribiendo..."

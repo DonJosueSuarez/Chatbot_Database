@@ -19,6 +19,7 @@ app.add_middleware(
 
 class PostHumanQueryPayload(BaseModel):
     human_query: str
+    plot: bool = False
     
 class PostHumanQueryResponse(BaseModel):
     result: list
@@ -57,7 +58,7 @@ async def human_query(payload: PostHumanQueryPayload) -> dict[str, str]:
         return{"error": "Failed to generate answer"}
     
     # Detectar si el usuario pide un gráfico
-    if llm.user_requests_plot(payload.human_query):
+    if llm.user_requests_plot(payload.plot):
         # Intentar inferir claves x/y automáticamente (simple: usar las dos primeras columnas)
         x_key, y_key = None, None
         if result and isinstance(result, list) and len(result) > 0:
@@ -65,7 +66,7 @@ async def human_query(payload: PostHumanQueryPayload) -> dict[str, str]:
             if len(keys) >= 2:
                 x_key, y_key = keys[0], keys[1]
         # Tipo de gráfico por defecto: barras
-        plot_type = "bar"
+        plot_type = "pie"
         # Generar gráfico solo si hay datos y claves válidas
         image_base64 = None
         if x_key and y_key:
@@ -75,4 +76,4 @@ async def human_query(payload: PostHumanQueryPayload) -> dict[str, str]:
     return{"answer": answer}
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="192.168.100.21", port=9015)
+    uvicorn.run(app, host="127.0.0.1", port=8000)

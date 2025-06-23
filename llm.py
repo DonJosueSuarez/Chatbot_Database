@@ -7,6 +7,8 @@ from io import BytesIO
 import re
 import os
 from dotenv import load_dotenv
+import textwrap
+
 # Cargar las variables de entorno desde el archivo .env
 load_dotenv()
 
@@ -77,40 +79,52 @@ async def build_answer(result: list[dict[str, Any]], human_query: str) -> str | 
 
     return response.json()["choices"][0]["message"]["content"]
 
-def generate_plot_from_sql_result(result: list[dict[str, Any]], plot_type: str = "bar", x_key: str = None, y_key: str = None, title: str = "") -> str:
-    """
-    Genera un gráfico con matplotlib a partir de los resultados SQL y lo retorna como un string base64.
-    plot_type: 'bar', 'pie', 'line', etc.
-    x_key, y_key: claves de los datos a graficar.
-    """
+def set_matplotlib_style():
+    plt.style.use('seaborn-v0_8-darkgrid')
+    plt.rcParams['font.family'] = 'Arial'
+
+def wrap_label(label, width=12):
+    import textwrap
+    return "\n".join(textwrap.wrap(str(label), width=width))
+
+def generate_plot_from_sql_result(result: list[dict[str, Any]], plot_type: str, x_key: str = None, y_key: str = None, title: str = "") -> str:
     if not result or not x_key or not y_key:
         return None
+
+    set_matplotlib_style()
     x = [row[x_key] for row in result]
     y = [row[y_key] for row in result]
-    plt.figure(figsize=(8,4))
+    x_labels_wrapped = [wrap_label(label) for label in x]
+
+    fig, ax = plt.subplots(figsize=(8, 5))
+
     if plot_type == "bar":
-        plt.style.use('ggplot')  # Estilo de matplotlib
-        plt.rcParams['font.family'] = 'Arial'  # Cambia la fuente a Arial
-        plt.bar(x, y)
+        bars = ax.bar(range(len(x)), y, align='center')
+        ax.set_xticks(range(len(x)))
+        ax.set_xticklabels(x_labels_wrapped, rotation=0, ha='center', fontsize=10, wrap=True)
+        ax.set_ylabel(y_key)
     elif plot_type == "pie":
-        plt.pie(y, labels=x, autopct='%1.1f%%')
+        fig.set_size_inches(8, 5)
+        wedges, texts, autotexts = ax.pie(y, labels=x_labels_wrapped, autopct='%1.1f%%', textprops={'fontsize': 10})
+        ax.axis('equal')
     elif plot_type == "line":
-        plt.plot(x, y, marker='o')
+        ax.plot(x, y, marker='o')
+        ax.set_xticks(range(len(x)))
+        ax.set_xticklabels(x_labels_wrapped, rotation=0, ha='center', fontsize=10, wrap=True)
+        ax.set_ylabel(y_key)
     else:
         return None
-    plt.title(title or f"{plot_type.title()} Chart")
+
+    if title:
+        ax.set_title(title)
     plt.tight_layout()
     buf = BytesIO()
-    plt.savefig(buf, format='png')
-    plt.close()
+    plt.savefig(buf, format='png', bbox_inches='tight')
+    plt.close(fig)
     buf.seek(0)
     img_base64 = base64.b64encode(buf.read()).decode('utf-8')
     return img_base64
 
-def user_requests_plot(human_query: str) -> bool:
-    """Detecta si el usuario solicita un gráfico en su pregunta."""
-    keywords = [
-        'grafica', 'gráfico', 'gráfica', 'plot', 'chart', 'diagrama', 'visualiza', 'visualización', 'barras', 'línea', 'pie', 'pastel'
-    ]
-    pattern = re.compile(r'(' + '|'.join(keywords) + r')', re.IGNORECASE)
-    return bool(pattern.search(human_query))
+def user_requests_plot(plot: bool) -> bool:
+    """Devuelve True si el usuario marcó la casilla de gráfico."""
+    return plot
