@@ -20,9 +20,15 @@
             </div>
             <form id="chat-form" class="chat-form">
                 <input type="text" id="user-input" placeholder="Escribe tu pregunta..." autocomplete="off" required />
-                <label style="display:flex;align-items:center;gap:4px;font-size:0.95em;">
-                  <input type="checkbox" id="plot-checkbox" style="margin:0;"> Gráfico
-                </label>
+                <div class="dropdown" style="position:relative;">
+                  <button type="button" id="dropdown-btn" style="padding:6px 12px;border-radius:8px;border:1px solid #ccc;background:#f5f5f5;cursor:pointer;color:#111;font-weight:300;">Tipo de Gráfico 🔼</button>
+                  <div id="dropdown-content" style="display:none;position:absolute;z-index:10;background:#fff;border:1px solid #ccc;padding:8px 12px;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.08);min-width:140px;bottom:110%;left:0;">
+                    <label><input type="checkbox" class="plot-type" value="bar"> Barras</label><br>
+                    <label><input type="checkbox" class="plot-type" value="pie"> Pastel</label><br>
+                    <label><input type="checkbox" class="plot-type" value="line"> Línea</label><br>
+                    <label><input type="checkbox" class="plot-type" value="scatter"> Dispersión</label>
+                  </div>
+                </div>
                 <button type="submit">Enviar</button>
             </form>
         </article>
@@ -31,7 +37,28 @@
     const chatWindow = document.getElementById('chat-window');
     const chatForm = document.getElementById('chat-form');
     const userInput = document.getElementById('user-input');
-    const plotCheckbox = document.getElementById('plot-checkbox');
+    // Dropdown
+    const dropdownBtn = document.getElementById('dropdown-btn');
+    const dropdownContent = document.getElementById('dropdown-content');
+    dropdownBtn.onclick = function(e) {
+      e.preventDefault();
+      dropdownContent.style.display = dropdownContent.style.display === 'block' ? 'none' : 'block';
+    };
+    document.addEventListener('click', function(e) {
+      if (!dropdownBtn.contains(e.target) && !dropdownContent.contains(e.target)) {
+        dropdownContent.style.display = 'none';
+      }
+    });
+    // Solo permitir un checkbox seleccionado a la vez
+    document.querySelectorAll('.plot-type').forEach(cb => {
+      cb.addEventListener('change', function() {
+        if (this.checked) {
+          document.querySelectorAll('.plot-type').forEach(other => {
+            if (other !== this) other.checked = false;
+          });
+        }
+      });
+    });
 
     function addMessage(sender, text, imageBase64 = null) {
         const msgDiv = document.createElement('div');
@@ -59,11 +86,13 @@
         addMessage('user', question);
         userInput.value = '';
         addMessage('bot', '<span class="typing">Escribiendo...</span>');
+        // Obtener tipo de gráfico seleccionado
+        const plotType = (document.querySelector('.plot-type:checked') || {}).value || null;
         try {
             const res = await fetch('http://127.0.0.1:8000/human_query', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ human_query: question, plot: plotCheckbox.checked })
+                body: JSON.stringify({ human_query: question, plot_type: plotType })
             });
             const data = await res.json();
             // Elimina el mensaje de "Escribiendo..."

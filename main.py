@@ -19,7 +19,7 @@ app.add_middleware(
 
 class PostHumanQueryPayload(BaseModel):
     human_query: str
-    plot: bool = False
+    plot_type: str | None = None
     
 class PostHumanQueryResponse(BaseModel):
     result: list
@@ -42,35 +42,26 @@ def limpiar_json_envoltura(texto: str) -> str:
     operation_id="post_human_query",
     description="""Gets a natural language query, internally transforms it to a SQL query, queries the database, and returns the result.""",)
 async def human_query(payload: PostHumanQueryPayload) -> dict[str, str]:
-    #transform human query to sql query
     sql_query = await llm.human_query_to_sql(payload.human_query)
     print(sql_query)
     sql_query = limpiar_json_envoltura(sql_query)
     if not sql_query:
         return{"error": "failed to generate SQL query"}
     result_dict = json.loads(sql_query)
-    
     result = await database.query(result_dict["sql_query"])
-    #return {"result": result}
-    
     answer = await llm.build_answer(result, payload.human_query)
     if not answer:
         return{"error": "Failed to generate answer"}
-    
-    # Detectar si el usuario pide un gráfico
-    if llm.user_requests_plot(payload.plot):
-        # Intentar inferir claves x/y automáticamente (simple: usar las dos primeras columnas)
+    # Si el usuario seleccionó un tipo de gráfico
+    if payload.plot_type:
         x_key, y_key = None, None
         if result and isinstance(result, list) and len(result) > 0:
             keys = list(result[0].keys())
             if len(keys) >= 2:
                 x_key, y_key = keys[0], keys[1]
-        # Tipo de gráfico por defecto: barras
-        plot_type = "pie"
-        # Generar gráfico solo si hay datos y claves válidas
         image_base64 = None
         if x_key and y_key:
-            image_base64 = llm.generate_plot_from_sql_result(result, plot_type=plot_type, x_key=x_key, y_key=y_key, title=payload.human_query)
+            image_base64 = llm.generate_plot_from_sql_result(result, plot_type=payload.plot_type, x_key=x_key, y_key=y_key, title=payload.human_query)
         return {"answer": answer, "image_base64": image_base64}
     # Si no se pide gráfico, solo respuesta textual
     return{"answer": answer}

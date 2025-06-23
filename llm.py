@@ -112,6 +112,11 @@ def generate_plot_from_sql_result(result: list[dict[str, Any]], plot_type: str, 
         ax.set_xticks(range(len(x)))
         ax.set_xticklabels(x_labels_wrapped, rotation=0, ha='center', fontsize=10, wrap=True)
         ax.set_ylabel(y_key)
+    elif plot_type == "scatter":
+        ax.scatter(range(len(x)), y)
+        ax.set_xticks(range(len(x)))
+        ax.set_xticklabels(x_labels_wrapped, rotation=0, ha='center', fontsize=10, wrap=True)
+        ax.set_ylabel(y_key)
     else:
         return None
 
